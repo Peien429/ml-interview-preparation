@@ -25,13 +25,12 @@ class MultiQueryAttention(nn.Module):
         self.out = nn.Linear(d_model, d_model)
 
     def forward(self, q, k, v, mask=None):
-        # key和value的长度相同，但是query的长度不一定和key/value相同（这里应该是不考虑Padding，所以允许qkv长度不一致）
+        # key和value的长度相同，但是query的长度不一定和key/value相同
 
         bs = q.shape[0]
         # Query的线性变换，然后把隐藏层拆成多个头，然后把头放到第二维
         query = self.q_linear(q).view(bs, -1, self.n_head, self.d_k).transpose(1, 2)
         # Key/Value的线性变换，维度变成[bs, seq_len, d_k]；增加注意力头对应的维度，后面利用广播实现多个注意力头共享Key/Value
-        # key = self.k_linear(k).unsqueeze(-2).transpose(1, 2)
         key = self.k_linear(k).unsqueeze(1)
         value = self.v_linear(v).unsqueeze(1)
         # 对key求转置，然后计算乘积，然后除以缩放因子
